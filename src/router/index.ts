@@ -11,7 +11,7 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: ``,
-        redirect: `/home/exclusive`,
+        redirect: `/home/recommend`,
       },
       {
         path: `recommend`,
@@ -20,6 +20,10 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: `exclusive`,
         component: () => import(`../views/content/Home/Exclusive.vue`)
+      },
+      {
+        path: `singers`,
+        component: () => import(`../views/content/Home/Artist.vue`)
       }
     ]
   }

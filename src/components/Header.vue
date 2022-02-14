@@ -687,6 +687,7 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,.3);
+  z-index: 99;
 
   .log_box {
     width: 340px;

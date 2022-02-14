@@ -5,10 +5,7 @@
       <ul class="nav_list">
         <li class="nav_item"><router-link to="/home/recommend">个性推荐</router-link></li>
         <li class="nav_item"><router-link to="/home/exclusive">专属定制</router-link></li>
-        <li class="nav_item"><router-link to="/home/playlist">歌单</router-link></li>
-        <li class="nav_item"><router-link to="/home/rank">排行榜</router-link></li>
         <li class="nav_item"><router-link to="/home/singers">歌手</router-link></li>
-        <li class="nav_item"><router-link to="/home/newMusic">最新音乐</router-link></li>
       </ul>
     </div>
 
