@@ -24,8 +24,20 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: `singers`,
         component: () => import(`../views/content/Home/Artist.vue`)
-      }
+      },
     ]
+  },
+  {
+    path: `/podcast`,
+    component: () => import(`../views/content/Boo.vue`)
+  },
+  {
+    path: `/streaming`,
+    component: () => import(`../views/content/Streaming.vue`)
+  },
+  {
+    path: `/audio`,
+    component: () => import(`../views/content/Audio.vue`)
   }
 ]
 

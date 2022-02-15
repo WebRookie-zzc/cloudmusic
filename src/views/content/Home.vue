@@ -11,7 +11,11 @@
 
 <!--    下侧内容-->
     <div class="home_content">
-      <router-view></router-view>
+      <router-view v-slot="{ Component }">
+        <keep-alive>
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
     </div>
   </div>
 </template>

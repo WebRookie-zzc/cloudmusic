@@ -8,7 +8,7 @@
         <input type="text" placeholder="搜索"
                v-model="searchValue"
                @focus="getDefaultList"
-               @blur="isShowSearchList = false; isShowDetail = false">
+               @blur="handleBlur">
 <!--        搜索下拉框-->
 <!--        搜索结果列表-->
         <ul class="search_list" v-if="isShowDetail && isShowSearchList">
@@ -27,7 +27,7 @@
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length === 0">无结果</li>
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length !== 0 &&  recommendSearchObj.order.includes(`songs`)">
             <div class="recommend_title">单曲</div>
-            <div class="recommend_detail" v-for="item in recommendSearchObj.songs">
+            <div class="recommend_detail" v-for="item in recommendSearchObj.songs" @click="changeMusicId(item.id)">
               {{item.name}} - <span v-for="artist in item.artists"> {{artist.name}}  &nbsp;</span>
             </div>
           </li>
@@ -197,6 +197,22 @@ export default defineComponent({
         },100)
       }
     })
+
+    /**
+     * 处理失去焦点事件
+     * */
+    function handleBlur() {
+      isShowSearchList.value = false;
+      setTimeout(() => {isShowDetail.value = false}, 1000)
+    }
+
+    /**
+     * 提交mutation 改变音乐Id
+     * @param newMusicId
+     * */
+    function changeMusicId(newMusicId:number) {
+      store.commit(`changeMusicId`, newMusicId)
+    }
 
     /**
      * @date 2022.2.4
@@ -427,6 +443,8 @@ export default defineComponent({
       isShowSearchList,
       recommendSearchObj,
       getRecommendSearchList,
+      handleBlur,
+      changeMusicId,
 
       //手机号登录
       isShowMask,

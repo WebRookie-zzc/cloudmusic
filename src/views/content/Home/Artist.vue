@@ -159,7 +159,7 @@ import axios from "axios";
       margin-top: 20px;
 
       .title {
-        margin-right: 20px
+        width: 100px;
       }
 
       .item_wrapper {
