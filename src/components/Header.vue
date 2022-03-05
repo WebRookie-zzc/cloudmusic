@@ -307,6 +307,9 @@ export default defineComponent({
             store.commit(`changeCookie`, res.data.cookie)
             store.commit(`addUserInfo`, res.data.profile)
             isShowMask.value = false
+
+            //登录成功后立即获取用户歌单列表
+            await store.dispatch(`getUserPlayList`)
           }
         }
       }else{

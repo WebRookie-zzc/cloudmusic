@@ -14,7 +14,9 @@
           <div class="fold_img"></div>
         </div>
         <div class="mine_songs" v-show="isShowMineSong">
-          <div class="mine_create_songs" v-for="(item, index) in userPlayList.playlist">
+          <div class="mine_create_songs"
+               v-for="(item, index) in store.state.userPlayList"
+               @click="handleClickPlaylist(index)">
               <div class="like_img" v-if="index === 0"></div>
               <span v-if="index === 0">我喜欢的音乐</span>
               <div class="song_img" v-if="index !== 0"></div>
@@ -36,7 +38,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, reactive, ref, toRefs} from "vue";
+import {defineComponent, onBeforeMount, reactive, ref, toRefs} from "vue";
 import {useStore} from "vuex";
 import axios from "axios";
 
@@ -64,14 +66,14 @@ export default defineComponent({
      * 获取用户歌单
      * */
     async function getMineSong() {
-      if(!userPlayList.playlist && store.state.logInfo.status) {
+      if(userPlayList.playlist.length === 0 && store.state.logInfo.status) {
         console.log(`向服务器发送请求，获取用户歌单`);
         //当本地没有用户歌单时，才向服务器发送请求
         let res = await axios({
           url: `http://localhost:3000/user/playlist?uid=${store.state.logInfo.profile.userId}`,
           method: "get",
         })
-        console.log(res.data)
+        console.log(res.data, 111)
         if(res.data.code === 200) {
           console.log(res.data.playlist);
           userPlayList.playlist = res.data.playlist
@@ -79,13 +81,26 @@ export default defineComponent({
       }
     }
 
+    /**
+     * 点击歌单时的处理函数
+     * @param index 歌单的索引值
+     * */
+    function handleClickPlaylist(index:number) {
+      store.dispatch(`getSongsListInOnePlaylist`, index)
+    }
+
+    onBeforeMount(async () => {
+      await store.dispatch(`getUserPlayList`)
+    })
+
     return {
       store,
 
       isShowMineSong,
       userPlayList,
       getMineSong,
-      ...toRefs(userPlayList)
+      ...toRefs(userPlayList),
+      handleClickPlaylist
     }
   }
 
@@ -152,6 +167,7 @@ export default defineComponent({
           line-height: 20px;
           color: #aaa;
           display: flex;
+          user-select:none;
 
           &:hover {
             cursor: pointer;
@@ -176,6 +192,9 @@ export default defineComponent({
          font-size: 16px;
          line-height: 25px;
          display: flex;
+         user-select:none;
+         cursor: pointer;
+
          .song_img, .like_img {
            width: 25px;
            height: 25px;

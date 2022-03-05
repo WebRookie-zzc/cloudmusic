@@ -12,10 +12,10 @@
     <div class="play_banner_wrapper" @mousemove="playBalMouseMove" @mouseup="playBalMouseUp">
 <!--      上面的播放控制按钮-->
       <div class="top_control_button_wrapper">
-        <div class="last_button"></div>
+        <div class="last_button" @click="clickLastSongBtn"></div>
         <div class="play_button" v-if="!isPlaySong" @click="handleClickPlayBtn"></div>
         <div class="pause_button" v-else @click="handleClickPauseBtn"></div>
-        <div class="next_button"></div>
+        <div class="next_button" @click="clickNextSongBtn"></div>
       </div>
 <!--      下面的播放进度条-->
       <div class="bottom_control_bar_wrapper">
@@ -34,11 +34,18 @@
     </div>
 <!--    右侧播放信息-->
     <div class="right_info">
+<!--      随机播放按钮-->
+      <div class="song_shuffle" title="随机播放" v-if="playlistState === 0" @click="changePlaylistState"></div>
+<!--      顺序播放按钮-->
+      <div class="song_order" title="顺序播放" v-if="playlistState === 1" @click="changePlaylistState"></div>
+<!--      单曲循环-->
+      <div class="song_only" title="单曲循环" v-if="playlistState === 2" @click="changePlaylistState"></div>
       <div class="SQ" title="无损音质"></div>
 <!--      音量-->
       <div class="volume"
-           @mouseenter="isShowVolumeBox = true"
-           @mouseleave="isShowVolumeBox = false; handleVolumeBarMouseleave()">
+           @mouseenter="handleVolumeBtnMouseenter"
+           @mouseleave="isShowVolumeBox = false; handleVolumeBarMouseleave()"
+           @mouseup="handleVolumeBarMouseleave">
 <!--        音量条容器-->
         <div class="volume_bar_wrapper"
              v-if="isShowVolumeBox"
@@ -47,7 +54,7 @@
           <div class="volume_all_bar"
                @mousedown="handleVolumeBarMousedown"
                ref="volumeAllBar"
-               @mouseleave="handleVolumeBarMouseleave">
+               @mouseup="handleVolumeBarMouseleave">
 <!--            实际音量条-->
             <div class="volume_now_bar" ref="volumeNowBar"></div>
 <!--            音量小球-->
@@ -55,12 +62,13 @@
           </div>
         </div>
       </div>
-      <div class="playListInfo" title="打开播放列表"></div>
+      <div class="playListInfo" title="打开播放列表" @click="handleClickPlaylistBtn"></div>
     </div>
     <audio :src="musicUrl" ref="audio"
            @timeupdate="handleTimeUpdate"
            @play="startPlay(1)"
-           @pause="pausePlay"></audio>
+           @pause="pausePlay"
+           @ended="endedPlay"></audio>
     <teleport to="body">
       <div class="player_content" v-show="isShowLyric">
         <div class="img_wrapper" ref="rotate">
@@ -95,11 +103,33 @@
         </div>
       </div>
     </teleport>
+
+<!--    显示歌单里面的歌曲-->
+    <teleport to="body">
+<!--      外容器-->
+      <div class="playlist_detail_out_wrapper" v-if="isShowPlaylistDetail" ref="playlistDetailOutWrapper">
+        <div class="playlist_detail_title">当前播放列表</div>
+<!--        可以滚动的内容器-->
+        <ul class="playlist_detail_inner_wrapper">
+          <li class="playlist_detail_item"
+              v-for="(item, index) in store.state.playingPlaylist.songs"
+              :class="{active: index === store.state.playingSongIndex,
+                       even: index % 2 === 1}"
+              @click="handleClickOneSong(index)">
+            <div class="song_name">{{item.name}}</div>
+            <div class="singer_name">
+              <span v-for="singer in item.ar">{{singer.name}}</span>&nbsp;
+            </div>
+            <div class="time_length">{{getSongTimeLengthInList(item.dt)}}</div>
+          </li>
+        </ul>
+      </div>
+    </teleport>
   </div>
 </template>
 
 <script lang="ts">
-import {computed, defineComponent, onBeforeMount, reactive, ref, watch} from "vue";
+import {computed, defineComponent, onBeforeMount, reactive, ref, toRefs, watch} from "vue";
 import axios from "axios";
 import {useStore} from "vuex";
 import {parse} from "@vue/compiler-sfc";
@@ -298,6 +328,23 @@ import {parse} from "@vue/compiler-sfc";
         isPlaySong.value = true
         if(flag === 0) {picDegree = 0}
         rotateTimer = setInterval(rotateElement, 50)
+      }
+
+      /**
+       * 处理播放完当前音乐的事件
+       * */
+      function endedPlay() {
+        //顺序播放
+        if(playlistDetail.playlistState === 1) {
+          store.commit(`changePlayingSongIndex`, store.state.playingSongIndex + 1)
+        }else if(playlistDetail.playlistState === 2) {
+          //单曲循环
+          audio.value.play()
+        }else{
+          //随机播放
+          let newIndex = Math.floor(Math.random() * store.state.playingPlaylist.songs.length)
+          store.commit(`changePlayingSongIndex`, newIndex)
+        }
       }
 
       /**
@@ -523,6 +570,102 @@ import {parse} from "@vue/compiler-sfc";
         isVolumeBarMousedown.value = false
       }
 
+      /**
+       * 鼠标进入音量按钮的处理函数
+       * */
+      function handleVolumeBtnMouseenter() {
+        isShowVolumeBox.value = true
+        //等元素被创造出来在调节样式
+        setTimeout(() => {
+          volumeNowBar.value.style.height = `${audio.value.volume * 100}px`
+          volumeBall.value.style.bottom = `${audio.value.volume * 100 - 5}px`
+        }, 1)
+      }
+
+      /**
+       * @brief 展示正在播放的歌单
+       * @date 2022.3.5
+       * */
+      let playlistDetail = reactive({
+        /**
+         * 处理列表中的歌曲的时长
+         * @param timeLength 歌曲总的毫秒数
+         * */
+          getSongTimeLengthInList(timeLength:number) {
+            let temp = timeLength / 60000
+            //分钟数
+            let minNum:number = parseInt(temp.toString())
+            let temp1 = (temp - minNum) * 60
+            //秒数
+            let secNum:number = parseInt(temp1.toString())
+            if(secNum.toString().length === 1) return `${minNum}:0${secNum}`
+            else return `${minNum}:${secNum}`
+          },
+
+          //是否显示播放列表详情
+          isShowPlaylistDetail: false,
+
+          /**
+           * 点击列表按钮时，进行列表详情的显示和隐藏
+           * */
+          handleClickPlaylistBtn() {
+            this.isShowPlaylistDetail = !this.isShowPlaylistDetail
+            this.playingSongToCenter()
+          },
+
+          /**
+           * 点击列表详情中的单曲时，切换正在播放的音乐
+           * @index 点击单曲的索引值
+           * */
+          handleClickOneSong(index:number) {
+            store.commit(`changePlayingSongIndex`, index)
+          },
+
+          /**
+           * 点击上一首按钮的处理按钮
+           * */
+          clickLastSongBtn() {
+            store.commit(`changePlayingSongIndex`, store.state.playingSongIndex - 1)
+          },
+
+          /**
+           * 点击下一首按钮的处理函数
+           * */
+          clickNextSongBtn() {
+            store.commit(`changePlayingSongIndex`, store.state.playingSongIndex + 1)
+          },
+
+          /**
+           * @date 2022.3.5
+           * @brief 展开歌单详情列表的时候，让正在播放的音乐尽可能显示在中间
+           * */
+
+
+          /**
+           * 让正在播放的歌曲显示在列表的中央
+           * */
+          playingSongToCenter() {
+            if(!this.isShowPlaylistDetail) return
+            setTimeout(() => {
+              playlistDetailOutWrapper.value.scrollTop = (store.state.playingSongIndex - 10) * 33
+            }, 10)
+          },
+
+          //歌单播放的状态 0表示随机播放 1表示顺序播放 2表示单曲循环、
+          playlistState: 1,
+
+          /**
+           * 点击播放方式时，改变播放方式
+           * */
+          changePlaylistState() {
+            this.playlistState += 1
+            if(this.playlistState === 3) this.playlistState = 0
+          }
+      })
+
+      //要滚动的dom元素
+      let playlistDetailOutWrapper = ref()
+
       onBeforeMount(async () => {
         await getDetailMusic()
         await getLyric()
@@ -568,6 +711,7 @@ import {parse} from "@vue/compiler-sfc";
         playBalMouseDown,
         playBalMouseMove,
         playBalMouseUp,
+        endedPlay,
 
         //音量控制
         isShowVolumeBox,
@@ -577,7 +721,12 @@ import {parse} from "@vue/compiler-sfc";
         volumeNowBar,
         volumeBall,
         handleVolumeBarMousemove,
-        handleVolumeBarMouseleave
+        handleVolumeBarMouseleave,
+        handleVolumeBtnMouseenter,
+
+        //歌单里面歌曲的显示
+        ...toRefs(playlistDetail),
+        playlistDetailOutWrapper
       }
     }
   })
@@ -605,8 +754,8 @@ import {parse} from "@vue/compiler-sfc";
       flex-direction: column;
 
       img {
-        width: 70px;
-        height: 70px;
+        width: 67px;
+        height: 67px;
         border-radius: 10px;
         &:hover {
           cursor: pointer;
@@ -729,6 +878,7 @@ import {parse} from "@vue/compiler-sfc";
         margin-left: 20px;
         margin-right: 20px;
         position: relative;
+        cursor: pointer;
 
         .have_play_bar {
           background-color: #FFA500;
@@ -757,7 +907,7 @@ import {parse} from "@vue/compiler-sfc";
   }
 
   .right_info {
-    width: 150px;
+    width: 200px;
     height: 40px;
     //border: 1px solid #000;
     position: absolute;
@@ -766,8 +916,9 @@ import {parse} from "@vue/compiler-sfc";
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-right: 20px;
 
-    .SQ, .playListInfo, .volume{
+    .SQ, .playListInfo, .volume, .song_shuffle, .song_order, .song_only{
       width: 40px;
       height: 40px;
       background: url("../assets/Player/SQ.png") no-repeat center center;
@@ -776,6 +927,21 @@ import {parse} from "@vue/compiler-sfc";
     }
     .playListInfo {
       background: url("../assets/Player/playList.png") no-repeat center center;
+      background-size: 25px 25px;
+    }
+
+    .song_shuffle {
+      background: url("../assets/Player/shuffle.png") no-repeat center center;
+      background-size: 25px 25px;
+    }
+
+    .song_order {
+      background: url("../assets/Player/order.png") no-repeat center center;
+      background-size: 25px 25px;
+    }
+
+    .song_only {
+      background: url("../assets/Player/only.png") no-repeat center center;
       background-size: 25px 25px;
     }
 
@@ -797,6 +963,7 @@ import {parse} from "@vue/compiler-sfc";
         background: #fff;
         justify-content: center;
         box-shadow: 0 0 10px #888888;
+        z-index:4;
 
         .volume_all_bar {
           margin-top: 8px;
@@ -838,7 +1005,7 @@ import {parse} from "@vue/compiler-sfc";
     bottom: 70px;
     //border: 3px solid #0f0;
     background-color: #eae6e6;
-    z-index: 10000;
+    z-index: 3;
 
     .img_wrapper {
       width: 300px;
@@ -989,6 +1156,118 @@ import {parse} from "@vue/compiler-sfc";
 
         .content {
           padding-left: 10px;
+        }
+      }
+    }
+  }
+
+  .playlist_detail_out_wrapper {
+    position: absolute;
+    right: 0;
+    top: 70px;
+    bottom: 70px;
+    //border: 1px solid #000;
+    width: 400px;
+    z-index: 10000;
+    background: #fff;
+    padding: 20px 10px 20px 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px #ccc;
+    overflow-x: hidden;
+    overflow-y: scroll;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+      border-radius: 5px;
+      height: 100%;
+      background-color: #666666;
+    }
+
+    &::-webkit-scrollbar-track {
+      width: 5px;
+      border-radius: 5px;
+      height: 100%;
+      background-color: #ddd;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      width: 5px;
+      border-radius: 20px;
+      height: 50px;
+      background-color: #C20C0C;
+    }
+
+    .playlist_detail_title {
+      height: 30px;
+      font-size: 20px;
+      line-height: 30px;
+      font-family: "楷体", serif;
+      font-weight: bolder;
+    }
+
+    .playlist_detail_inner_wrapper {
+      display: flex;
+      flex-direction: column;
+      width: 360px;
+
+      .playlist_detail_item {
+        width: 100%;
+        height: 25px;
+        line-height: 25px;
+        border: 1px solid #aaa;
+        margin-bottom: 8px;
+        padding-left: 25px;
+        font-size: 8px;
+        display: flex;
+        flex-direction: row;
+        user-select: none;
+        cursor: pointer;
+        border-radius: 12.5px;
+
+        /* 偶数的 item 加深背景颜色 */
+        &.even {
+          background-color: #dcdcdc;
+        }
+
+        &:hover {
+          .time_length {
+            color: #666;
+          }
+        }
+
+        &.active {
+          color: #C20C0C;
+          font-weight: bolder;
+          background-image : url('../assets/Player/playing.png');
+          background-size: 10px 10px;
+          background-repeat: no-repeat;
+          background-position: 10px center;
+          border: 1px solid #C20C0C;
+          .time_length {
+            color: #C20C0C;
+          }
+        }
+
+        .song_name, .singer_name {
+          width: 150px;
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
+        }
+
+        .singer_name {
+          width: 100px;
+          margin-left: 10px;
+          margin-right: 10px;
+          font-size: 5px;
+          span {
+            font-size: 5px;
+          }
+        }
+
+        .time_length {
+          width: 70px;
+          color: #bbb;
         }
       }
     }
