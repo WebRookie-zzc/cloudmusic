@@ -27,7 +27,7 @@
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length === 0">无结果</li>
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length !== 0 &&  recommendSearchObj.order.includes(`songs`)">
             <div class="recommend_title">单曲</div>
-            <div class="recommend_detail" v-for="item in recommendSearchObj.songs" @click="changeMusicId(item.id)">
+            <div class="recommend_detail" v-for="(item, index) in recommendSearchObj.songs" @click="changeMusicId(item.id, index)">
               {{item.name}} - <span v-for="artist in item.artists"> {{artist.name}}  &nbsp;</span>
             </div>
           </li>
@@ -168,7 +168,7 @@ export default defineComponent({
     //存储定时器用于消抖
     let recommendTimer:any;
     //存储推荐内容
-    let recommendSearchObj = ref({})
+    let recommendSearchObj = ref({songs:[{ar:``, artists: ``, dt:``,duration: ``}]})
 
     /**
      * 调用接口获取搜索建议
@@ -207,11 +207,16 @@ export default defineComponent({
     }
 
     /**
-     * 提交mutation 改变音乐Id
+     * 提交mutation 改变音乐Id， 并添加到播放的列表中(不是添加到歌单中)
      * @param newMusicId
+     * @param index 搜索结果中的单曲的索引值
      * */
-    function changeMusicId(newMusicId:number) {
+    function changeMusicId(newMusicId:number ,index:number) {
       store.commit(`changeMusicId`, newMusicId)
+      //添加到播放列表中
+      recommendSearchObj.value.songs[index].ar = recommendSearchObj.value.songs[index].artists
+      recommendSearchObj.value.songs[index].dt = recommendSearchObj.value.songs[index].duration
+      store.commit(`addElementToPlayingPlaylist`, recommendSearchObj.value.songs[index])
     }
 
     /**

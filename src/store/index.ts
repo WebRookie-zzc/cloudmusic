@@ -58,6 +58,13 @@ export default createStore({
 
       //更换播放音乐的ID
       state.musicId = state.playingPlaylist.songs[state.playingSongIndex].id
+    },
+
+    /**
+     * 用于搜索并点击后，添加到播放列表
+     * */
+    addElementToPlayingPlaylist(state, newValue:any) {
+      state.playingPlaylist.songs.splice(state.playingSongIndex, 0, newValue)
     }
   },
   actions: {
