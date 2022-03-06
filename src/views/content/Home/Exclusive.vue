@@ -1,4 +1,6 @@
 <template>
+<<<<<<< HEAD
+<<<<<<< HEAD
   <div class="exclusive" ref="exclusive" @scroll="scroll">
     <h2 v-if="!store.state.logInfo.status">请先登录。。。。</h2>
     <div v-if="store.state.logInfo.status" class="exclusive_wrapper"  @scroll="scroll">
@@ -12,6 +14,28 @@
         </div>
         <div class="playlist_item_box">
           <ul class="playlist_item_wrapper" :class="{playlist_item_wrapper_tran:isMoveWrapperUl}">
+=======
+  <div class="exclusive">
+=======
+  <div class="exclusive" ref="exclusive" @scroll="scroll">
+>>>>>>> 9f1452e (2022.2.14)
+    <h2 v-if="!store.state.logInfo.status">请先登录。。。。</h2>
+    <div v-if="store.state.logInfo.status" class="exclusive_wrapper"  @scroll="scroll">
+      <div class="mine_playlist">
+        <div class="playlist_title">你的雷达歌单</div>
+        <div class="button_box">
+          <div class="before_button"
+               @click="isMoveWrapperUl = false">&lt;</div>
+          <div class="next_button"
+               @click="isMoveWrapperUl = true">&gt;</div>
+        </div>
+        <div class="playlist_item_box">
+<<<<<<< HEAD
+          <ul class="playlist_item_wrapper">
+>>>>>>> 3fac76e (2022.2.12)
+=======
+          <ul class="playlist_item_wrapper" :class="{playlist_item_wrapper_tran:isMoveWrapperUl}">
+>>>>>>> 9f1452e (2022.2.14)
             <li class="play_item" v-for="(item, index) in recommendPlaylist.recommendPlaylist">
               <img :src="item.picUrl" alt="playlist">
               <div class="playlist_name">{{item.name}}</div>
@@ -20,6 +44,10 @@
           </ul>
         </div>
       </div>
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9f1452e (2022.2.14)
 <!--      我的音乐假期-->
       <div class="mine_music_holiday">
         <div class="holiday_title">我的音乐假期</div>
@@ -35,12 +63,25 @@
                @click="exclusive.scrollTop = 0"></div>
         </teleport>
       </div>
+<<<<<<< HEAD
+=======
+>>>>>>> 3fac76e (2022.2.12)
+=======
+>>>>>>> 9f1452e (2022.2.14)
     </div>
   </div>
 </template>
 
 <script lang="ts">
+<<<<<<< HEAD
+<<<<<<< HEAD
 import {defineComponent, onBeforeMount, reactive, ref} from "vue";
+=======
+import {defineComponent, onBeforeMount, reactive} from "vue";
+>>>>>>> 3fac76e (2022.2.12)
+=======
+import {defineComponent, onBeforeMount, reactive, ref} from "vue";
+>>>>>>> 9f1452e (2022.2.14)
   import {useStore} from "vuex";
 import axios from "axios";
 
@@ -48,7 +89,14 @@ import axios from "axios";
     name: `Exclusive`,
     setup() {
       let store = useStore()
+<<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3fac76e (2022.2.12)
+=======
+
+>>>>>>> 9f1452e (2022.2.14)
       /**
        * @date 2022.2.8
        * @brief 推荐歌单
@@ -72,6 +120,10 @@ import axios from "axios";
         recommendPlaylist.recommendPlaylist = res.data.recommend
       }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9f1452e (2022.2.14)
       //是否移动 wrapper_box
       let isMoveWrapperUl = ref(false)
 
@@ -127,11 +179,22 @@ import axios from "axios";
       onBeforeMount(async () => {
         await getRecommendPlaylist()
         await getPlaylistRec()
+<<<<<<< HEAD
+=======
+      onBeforeMount(async () => {
+        await getRecommendPlaylist()
+>>>>>>> 3fac76e (2022.2.12)
+=======
+>>>>>>> 9f1452e (2022.2.14)
       })
 
       return {
         store,
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9f1452e (2022.2.14)
         recommendPlaylist,
         isMoveWrapperUl,
         pageNum,
@@ -139,12 +202,22 @@ import axios from "axios";
         belowPlaylist,
         scroll,
         exclusive
+<<<<<<< HEAD
+=======
+        recommendPlaylist
+>>>>>>> 3fac76e (2022.2.12)
+=======
+>>>>>>> 9f1452e (2022.2.14)
       }
     }
   })
 </script>
 
 <style scoped lang="less">
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9f1452e (2022.2.14)
   .exclusive {
     overflow: scroll;
     overflow-x: hidden;
@@ -294,4 +367,10 @@ import axios from "axios";
      cursor: pointer;
     }
   }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3fac76e (2022.2.12)
+=======
+>>>>>>> 9f1452e (2022.2.14)
 </style>

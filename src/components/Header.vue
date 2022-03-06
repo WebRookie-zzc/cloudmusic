@@ -8,7 +8,11 @@
         <input type="text" placeholder="搜索"
                v-model="searchValue"
                @focus="getDefaultList"
+<<<<<<< HEAD
                @blur="handleBlur">
+=======
+               @blur="isShowSearchList = false; isShowDetail = false">
+>>>>>>> 3fac76e (2022.2.12)
 <!--        搜索下拉框-->
 <!--        搜索结果列表-->
         <ul class="search_list" v-if="isShowDetail && isShowSearchList">
@@ -27,7 +31,11 @@
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length === 0">无结果</li>
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length !== 0 &&  recommendSearchObj.order.includes(`songs`)">
             <div class="recommend_title">单曲</div>
+<<<<<<< HEAD
             <div class="recommend_detail" v-for="item in recommendSearchObj.songs" @click="changeMusicId(item.id)">
+=======
+            <div class="recommend_detail" v-for="item in recommendSearchObj.songs">
+>>>>>>> 3fac76e (2022.2.12)
               {{item.name}} - <span v-for="artist in item.artists"> {{artist.name}}  &nbsp;</span>
             </div>
           </li>
@@ -199,6 +207,7 @@ export default defineComponent({
     })
 
     /**
+<<<<<<< HEAD
      * 处理失去焦点事件
      * */
     function handleBlur() {
@@ -215,6 +224,8 @@ export default defineComponent({
     }
 
     /**
+=======
+>>>>>>> 3fac76e (2022.2.12)
      * @date 2022.2.4
      * @brief 登录功能
      * @finished 2022.2.6
@@ -443,8 +454,11 @@ export default defineComponent({
       isShowSearchList,
       recommendSearchObj,
       getRecommendSearchList,
+<<<<<<< HEAD
       handleBlur,
       changeMusicId,
+=======
+>>>>>>> 3fac76e (2022.2.12)
 
       //手机号登录
       isShowMask,
@@ -705,7 +719,14 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,.3);
+<<<<<<< HEAD
+<<<<<<< HEAD
   z-index: 99;
+=======
+>>>>>>> 3fac76e (2022.2.12)
+=======
+  z-index: 99;
+>>>>>>> 9f1452e (2022.2.14)
 
   .log_box {
     width: 340px;

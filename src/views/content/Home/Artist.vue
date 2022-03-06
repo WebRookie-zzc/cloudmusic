@@ -159,7 +159,11 @@ import axios from "axios";
       margin-top: 20px;
 
       .title {
+<<<<<<< HEAD
         width: 100px;
+=======
+        margin-right: 20px
+>>>>>>> 9f1452e (2022.2.14)
       }
 
       .item_wrapper {

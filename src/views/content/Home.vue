@@ -5,17 +5,32 @@
       <ul class="nav_list">
         <li class="nav_item"><router-link to="/home/recommend">个性推荐</router-link></li>
         <li class="nav_item"><router-link to="/home/exclusive">专属定制</router-link></li>
+<<<<<<< HEAD
+<<<<<<< HEAD
         <li class="nav_item"><router-link to="/home/singers">歌手</router-link></li>
+=======
+        <li class="nav_item"><router-link to="/home/playlist">歌单</router-link></li>
+        <li class="nav_item"><router-link to="/home/rank">排行榜</router-link></li>
+        <li class="nav_item"><router-link to="/home/singers">歌手</router-link></li>
+        <li class="nav_item"><router-link to="/home/newMusic">最新音乐</router-link></li>
+>>>>>>> 3fac76e (2022.2.12)
+=======
+        <li class="nav_item"><router-link to="/home/singers">歌手</router-link></li>
+>>>>>>> 9f1452e (2022.2.14)
       </ul>
     </div>
 
 <!--    下侧内容-->
     <div class="home_content">
+<<<<<<< HEAD
       <router-view v-slot="{ Component }">
         <keep-alive>
           <component :is="Component" />
         </keep-alive>
       </router-view>
+=======
+      <router-view></router-view>
+>>>>>>> 3fac76e (2022.2.12)
     </div>
   </div>
 </template>
