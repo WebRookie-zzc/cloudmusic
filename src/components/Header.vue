@@ -931,7 +931,7 @@ export default defineComponent({
         border-radius: 20px;
         text-align: center;
         font-weight: bolder;
-        font-family: "楷体";
+        font-family: "楷体", Serif;
 
         &:hover {
           cursor: pointer;

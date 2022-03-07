@@ -62,6 +62,8 @@
           </div>
         </div>
       </div>
+<!--      歌词的开闭开关-->
+      <div class="lyric" @click="isShowLyric = !isShowLyric" title="歌词"></div>
       <div class="playListInfo" title="打开播放列表" @click="handleClickPlaylistBtn"></div>
     </div>
     <audio :src="musicUrl" ref="audio"
@@ -115,12 +117,15 @@
               v-for="(item, index) in store.state.playingPlaylist.songs"
               :class="{active: index === store.state.playingSongIndex,
                        even: index % 2 === 1}"
-              @click="handleClickOneSong(index)">
+              @click.stop="handleClickOneSong(index)">
             <div class="song_name">{{item.name}}</div>
             <div class="singer_name">
               <span v-for="singer in item.ar">{{singer.name}}</span>&nbsp;
             </div>
             <div class="time_length">{{getSongTimeLengthInList(item.dt)}}</div>
+<!--            删除按钮-->
+<!--            stop: 阻止事件冒泡 -->
+            <div class="delete_song" @click.stop="deleteSongInPlaylist(index)"></div>
           </li>
         </ul>
       </div>
@@ -660,6 +665,15 @@ import {parse} from "@vue/compiler-sfc";
           changePlaylistState() {
             this.playlistState += 1
             if(this.playlistState === 3) this.playlistState = 0
+          },
+
+          /**
+           * 点击删除按钮时，删除播放列表中的歌曲
+           * @param index 要删除歌曲的索引值
+           * */
+          deleteSongInPlaylist(index:number) {
+            console.log(`delete 按钮`);
+            store.commit(`deleteElementOfPlayPlaylist`, index)
           }
       })
 
@@ -907,7 +921,7 @@ import {parse} from "@vue/compiler-sfc";
   }
 
   .right_info {
-    width: 200px;
+    width: 240px;
     height: 40px;
     //border: 1px solid #000;
     position: absolute;
@@ -918,13 +932,22 @@ import {parse} from "@vue/compiler-sfc";
     align-items: center;
     margin-right: 20px;
 
-    .SQ, .playListInfo, .volume, .song_shuffle, .song_order, .song_only{
+    .SQ, .playListInfo, .volume, .song_shuffle, .song_order, .song_only .lyric{
       width: 40px;
       height: 40px;
       background: url("../assets/Player/SQ.png") no-repeat center center;
       background-size: 30px 30px;
       cursor: pointer;
     }
+
+    .lyric {
+      width: 40px;
+      height: 40px;
+      background: url("../assets/Player/lyric.png") no-repeat center center;
+      background-size: 40px 40px;
+      cursor: pointer;
+    }
+
     .playListInfo {
       background: url("../assets/Player/playList.png") no-repeat center center;
       background-size: 25px 25px;
@@ -1233,6 +1256,10 @@ import {parse} from "@vue/compiler-sfc";
           .time_length {
             color: #666;
           }
+
+          .delete_song {
+            opacity: 1;
+          }
         }
 
         &.active {
@@ -1268,6 +1295,15 @@ import {parse} from "@vue/compiler-sfc";
         .time_length {
           width: 70px;
           color: #bbb;
+        }
+
+        .delete_song {
+          width: 25px;
+          height: 25px;
+          background: url("../assets/Player/delete.png") no-repeat center center;
+          background-size: 15px 15px;
+          opacity: 0;
+          transition: .5s;
         }
       }
     }

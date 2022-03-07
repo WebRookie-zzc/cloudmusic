@@ -18,6 +18,7 @@ export default createStore({
     // musicId: 1910911958,
     //现在播放的音乐的单曲id
     musicId : 1910966474,
+    // musicId: 0,
     // 用户所有的歌单
     userPlayList: [{id: 0}],
     //现在正在播放的歌单
@@ -64,7 +65,32 @@ export default createStore({
      * 用于搜索并点击后，添加到播放列表
      * */
     addElementToPlayingPlaylist(state, newValue:any) {
-      state.playingPlaylist.songs.splice(state.playingSongIndex, 0, newValue)
+      state.playingPlaylist.songs.splice(state.playingSongIndex + 1, 0, newValue)
+      state.playingSongIndex += 1
+      state.musicId = state.playingPlaylist.songs[state.playingSongIndex].id
+    },
+
+    /**
+     * 删除播放列表中的某一首歌曲
+     * @param state state 对象
+     * @param index 要删除歌曲的索引值
+     * */
+    deleteElementOfPlayPlaylist(state, index:number) {
+      //播放列表中至少有一首歌曲
+      if(state.playingPlaylist.songs.length === 1) return
+      if(index === state.playingSongIndex) {
+        //删除点击个歌曲
+        state.playingPlaylist.songs.splice(index,1)
+
+        //如果删除的是正在播放的歌曲，那么需要切换播放的歌曲
+        state.musicId = state.playingPlaylist.songs[state.playingSongIndex].id
+      }else if (index < state.playingSongIndex) {
+        state.playingSongIndex = state.playingSongIndex - 1
+        state.playingPlaylist.songs.splice(index,1)
+      }
+        else{
+        state.playingPlaylist.songs.splice(index,1)
+      }
     }
   },
   actions: {
