@@ -3,10 +3,12 @@
 <!--    左侧正在播放的歌曲的信息-->
     <div class="left_info">
       <img :src="musicDetail.musicDetail[0].al.picUrl" alt="" @click="isShowLyric = !isShowLyric">
-      <div class="left_name">{{musicDetail.musicDetail[0].name}}</div>
-      <ul class="singer_name">
-        <li v-for="item in musicDetail.musicDetail[0].ar">{{item.name}}</li>
-      </ul>
+      <div class="song_info">
+        <div class="left_name">{{musicDetail.musicDetail[0].name}}</div>
+        <ul class="singer_name">
+          <li v-for="item in musicDetail.musicDetail[0].ar">{{item.name}}</li>
+        </ul>
+      </div>
     </div>
 <!--    播放控制条-->
     <div class="play_banner_wrapper" @mousemove="playBalMouseMove" @mouseup="playBalMouseUp">
@@ -98,8 +100,13 @@
 <!--          歌词外部容器-->
           <div class="lyric_out_wrapper" ref="innerLyric">
 <!--            歌词内部容器-->
-            <ul class="lyric_inner_wrapper">
-              <li class="lyric_item" v-for="(item, index) in lastArr.lastArr" :class="{active: lyricIndex === index}">{{item.lyric}}</li>
+            <ul class="lyric_inner_wrapper"
+                @mousedown="mousedownLyricInnerWrapper"
+                @mousemove="mousemoveLyricInnerWrapper">
+              <li class="lyric_item"
+                  v-for="(item, index) in lastArr.lastArr"
+                  :class="{active: lyricIndex === index}"
+                  @click="clickJumpPlay(index)">{{item.lyric}}</li>
             </ul>
           </div>
         </div>
@@ -228,6 +235,7 @@ import {parse} from "@vue/compiler-sfc";
       // //处理后的歌词
       let lastArr = reactive({lastArr:[{time: 0, lyric: ``}]})
 
+
       function handleLyric() {
         lastArr.lastArr = []
         let lineArr = originLyric.value.split(`\n`)
@@ -263,7 +271,10 @@ import {parse} from "@vue/compiler-sfc";
         for(let i = 0; i < lastArr.lastArr.length; i++) {
           if(lastArr.lastArr[i].time > audio.value.currentTime) {
             lyricIndex.value = i - 1;
-            innerLyric.value.scrollTop = (lyricIndex.value - 5) * 35
+            if(dragLyric.isLyricMousedown === false) {
+              //鼠标按下歌词时候不能自动滚动
+              innerLyric.value.scrollTop = (lyricIndex.value - 5) * 35
+            }
             break
           }
         }
@@ -680,6 +691,77 @@ import {parse} from "@vue/compiler-sfc";
       //要滚动的dom元素
       let playlistDetailOutWrapper = ref()
 
+      /**
+       * @brief 歌词的拖拽和点击跳转播放点击的歌词
+       * @date 2022.03.08
+       * */
+      let dragLyric = reactive({
+        /**
+         * 点击歌词时跳转到此歌词处播放
+         * @param index 点击歌词的索引值
+         * */
+        clickJumpPlay(index:number) {
+          // console.log(lastArr.lastArr);
+          //如果点击的正在播放的那一句歌词，那么不动作
+          if(index === lyricIndex.value){
+          }else{
+            audio.value.currentTime = lastArr.lastArr[index].time
+          }
+          //若处于暂停的状态，点击歌词应该变为播放状态
+          audio.value.play()
+        },
+
+        //歌词内容器是否处于鼠标按下的状态
+        isLyricMousedown: false,
+
+        //歌词内容器是否处于鼠标移动的状态
+        isLyricMousemove: false,
+
+        //鼠标按下时的位置
+        mousedownPositionY: 0,
+
+        //鼠标按下并移动时的位置
+        mousemovePositionY: 0,
+
+        //歌词点击时滚动条位置
+        mousedownScrollTopValue: 0,
+
+        /**
+         * 鼠标调节歌词的位置, 处理鼠标按下事件
+         * @param event 事件对象
+         * */
+        mousedownLyricInnerWrapper(event:any) {
+          this.isLyricMousedown = true
+          this.mousedownPositionY = event.screenY
+          // console.log(innerLyric.value, `mousedown 的dom`);
+          this.mousedownScrollTopValue = innerLyric.value.scrollTop
+        },
+
+        /**
+         * 鼠标调节歌词的位置, 处理鼠标按下并移动事件
+         * @param event 事件对象
+         * */
+        mousemoveLyricInnerWrapper(event:any) {
+          this.isLyricMousemove = true
+          if(this.isLyricMousedown) {
+            //当鼠标按下时才动作
+            this.mousemovePositionY = event.screenY
+            // console.log(playlistDetailOutWrapper.value, `mousemove 的dom`);
+            innerLyric.value.scrollTop = this.mousedownScrollTopValue + ( this.mousedownPositionY - this.mousemovePositionY)
+            console.log(innerLyric.value.scrollTop);
+          }
+        },
+
+        /**
+         * 鼠标调节歌词的位置, 处理鼠标抬起事件
+         * @param event 事件对象
+         * */
+        mouseupLyricInnerWrapper(event:any) {
+          this.isLyricMousedown = false
+          this.isLyricMousemove = false
+        }
+      })
+
       onBeforeMount(async () => {
         await getDetailMusic()
         await getLyric()
@@ -740,7 +822,9 @@ import {parse} from "@vue/compiler-sfc";
 
         //歌单里面歌曲的显示
         ...toRefs(playlistDetail),
-        playlistDetailOutWrapper
+        playlistDetailOutWrapper,
+
+        ...toRefs(dragLyric),
       }
     }
   })
@@ -761,11 +845,11 @@ import {parse} from "@vue/compiler-sfc";
     display: flex;
 
     .left_info {
-      width: 300px;
+      width: 400px;
       height: 100%;
       display: flex;
-      flex-wrap: wrap;
-      flex-direction: column;
+      flex-wrap: nowrap;
+      flex-direction: row;
 
       img {
         width: 67px;
@@ -776,22 +860,35 @@ import {parse} from "@vue/compiler-sfc";
         }
       }
 
-      .left_name, .singer_name {
-        font-size: 16px;
-        //margin-left: 20px;
-        line-height: 30px;
-        font-weight: bolder;
-      }
-
-      .singer_name {
+      .song_info {
+        width: 300px;
+        height: 60px;
         display: flex;
-        font-weight: normal;
-        font-size: 14px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-left: 30px;
+        //border: 1px solid #000;
 
-        li {
-          padding-right: 10px;
+        .left_name, .singer_name {
+          width: 300px;
+          font-size: 16px;
+          //margin-left: 20px;
+          line-height: 30px;
+          font-weight: bolder;
+        }
+
+        .singer_name {
+          display: flex;
+          font-weight: normal;
+          font-size: 14px;
+
+          li {
+            padding-right: 10px;
+          }
         }
       }
+
     }
 
     audio {
@@ -808,7 +905,7 @@ import {parse} from "@vue/compiler-sfc";
     align-items: center;
     display: flex;
     flex-direction: column;
-    width: 1000px;
+    width: 800px;
     //border: 1px solid #000;
 
     .top_control_button_wrapper {
@@ -964,8 +1061,11 @@ import {parse} from "@vue/compiler-sfc";
     }
 
     .song_only {
+      width: 40px;
+      height: 40px;
       background: url("../assets/Player/only.png") no-repeat center center;
       background-size: 25px 25px;
+      cursor: pointer;
     }
 
     .volume {
@@ -1102,6 +1202,8 @@ import {parse} from "@vue/compiler-sfc";
         .lyric_inner_wrapper {
           position: absolute;
           transition: .3s;
+          user-select: none;
+          cursor: pointer;
 
           li {
             height: 35px;
