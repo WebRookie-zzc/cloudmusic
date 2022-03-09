@@ -99,14 +99,18 @@
           </div>
 <!--          歌词外部容器-->
           <div class="lyric_out_wrapper" ref="innerLyric">
+<!--            鼠标拖动时显示的线-->
+<!--            <div class="dashed_line"></div>-->
 <!--            歌词内部容器-->
             <ul class="lyric_inner_wrapper"
                 @mousedown="mousedownLyricInnerWrapper"
-                @mousemove="mousemoveLyricInnerWrapper">
+                @mousemove="mousemoveLyricInnerWrapper"
+                @mouseup="mouseupLyricInnerWrapper">
               <li class="lyric_item"
                   v-for="(item, index) in lastArr.lastArr"
                   :class="{active: lyricIndex === index}"
-                  @click="clickJumpPlay(index)">{{item.lyric}}</li>
+                  @click=""
+                  @mousedown="mousedownLyricInnerWrapper($event, index)">{{item.lyric}}</li>
             </ul>
           </div>
         </div>
@@ -232,7 +236,7 @@ import {parse} from "@vue/compiler-sfc";
        * 处理歌词
        */
 
-      // //处理后的歌词
+      ///处理后的歌词
       let lastArr = reactive({lastArr:[{time: 0, lyric: ``}]})
 
 
@@ -271,7 +275,7 @@ import {parse} from "@vue/compiler-sfc";
         for(let i = 0; i < lastArr.lastArr.length; i++) {
           if(lastArr.lastArr[i].time > audio.value.currentTime) {
             lyricIndex.value = i - 1;
-            if(dragLyric.isLyricMousedown === false) {
+            if(dragLyric.isLyricMousedown === false && dragLyric.clickLyricIndex === -1) {
               //鼠标按下歌词时候不能自动滚动
               innerLyric.value.scrollTop = (lyricIndex.value - 5) * 35
             }
@@ -726,15 +730,26 @@ import {parse} from "@vue/compiler-sfc";
         //歌词点击时滚动条位置
         mousedownScrollTopValue: 0,
 
+        //鼠标按下的歌词的索引值 -1 表示没有按下
+        clickLyricIndex : -1,
+
+        //改变index的定时器(setTimeOut)
+        changeIndexTimer: -1,
+
         /**
          * 鼠标调节歌词的位置, 处理鼠标按下事件
          * @param event 事件对象
+         * @param index 鼠标按下的歌词的索引值
          * */
-        mousedownLyricInnerWrapper(event:any) {
+        mousedownLyricInnerWrapper(event:any, index = -1) {
           this.isLyricMousedown = true
           this.mousedownPositionY = event.screenY
           // console.log(innerLyric.value, `mousedown 的dom`);
           this.mousedownScrollTopValue = innerLyric.value.scrollTop
+          if(index !== -1) {
+            //不为-1 说明传入了值
+            this.clickLyricIndex = index
+          }
         },
 
         /**
@@ -742,13 +757,14 @@ import {parse} from "@vue/compiler-sfc";
          * @param event 事件对象
          * */
         mousemoveLyricInnerWrapper(event:any) {
-          this.isLyricMousemove = true
           if(this.isLyricMousedown) {
+            this.isLyricMousemove = true
+
             //当鼠标按下时才动作
             this.mousemovePositionY = event.screenY
-            // console.log(playlistDetailOutWrapper.value, `mousemove 的dom`);
+            // console.log(playlistDetailOutWrapper.value, `mousemove的dom`);
             innerLyric.value.scrollTop = this.mousedownScrollTopValue + ( this.mousedownPositionY - this.mousemovePositionY)
-            console.log(innerLyric.value.scrollTop);
+            // console.log(innerLyric.value.scrollTop);
           }
         },
 
@@ -757,6 +773,18 @@ import {parse} from "@vue/compiler-sfc";
          * @param event 事件对象
          * */
         mouseupLyricInnerWrapper(event:any) {
+          if(!this.isLyricMousemove) {
+            //这里是点击
+              this.clickJumpPlay(this.clickLyricIndex)
+            this.clickLyricIndex = -1
+          }else {
+            //这里是拖动
+            clearTimeout(this.changeIndexTimer)
+            this.changeIndexTimer = setTimeout(() => {
+              //拖动后两秒后再回滚到播放的位置
+              this.clickLyricIndex = -1
+            }, 1000)
+          }
           this.isLyricMousedown = false
           this.isLyricMousemove = false
         }
@@ -1198,6 +1226,16 @@ import {parse} from "@vue/compiler-sfc";
           display: none; /* Chrome Safari */
         }
         transition: .3s;
+
+        ///*拖动显示的线*/
+        //.dashed_line {
+        //  width: 50%;
+        //  height: 1px;
+        //  border: 1px dashed #000;
+        //  position: absolute;
+        //  top: 205px;
+        //  left: 30%;
+        //}
 
         .lyric_inner_wrapper {
           position: absolute;
