@@ -82,15 +82,62 @@
         </div>
         <div class="out_comment_wrapper">
           <!--                  评论容器-->
-          <ul class="comment_wrapper">
-            <li class="title">热门评论</li>
-            <li class="comment_item" v-for="item in commentList.commentList">
-              <div class="img"><img :src="item.user.avatarUrl" alt=""></div>
-              <div class="content">
-                <span style="color: #00f">{{item.user.nickname}}:</span>{{item.content}}
+          <div class="comment_add_wrapper">
+            <ul class="comment_wrapper">
+              <li class="title">热门评论</li>
+              <li class="comment_item" v-for="(item, index) in commentList.commentList">
+                <div class="img"><img :src="item.user.avatarUrl" alt=""></div>
+                <div class="content_wrapper">
+                  <div class="content">
+                    <div class="comment_span_wrapper">
+                      <span style="color: #00f">{{item.user.nickname}}:</span>{{item.content}}
+                    </div>
+                  </div>
+                  <div class="comment_date_and_like_btn">
+                    <div class="comment_date">{{item.timeStr}}</div>
+                    <div class="right_do">
+                      <div class="comment_like" title="点赞" @click="handleClickLike(0, index)">
+                        <img :src="getLikeImgSrc(0, index)" alt="">
+                        {{item.likedCount}}
+                      </div>
+                      <div class="comment_share" title="分享"></div>
+                      <div class="comment_reply" title="回复评论"></div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ul>
+<!--            最新评论-->
+            <div class="new_comment">
+              <div class="new_comment_title">新版评论</div>
+              <ul class="new_comment_wrapper">
+                <li class="comment_item" v-for="(item, index) in newCommentArr.newCommentArr" :key="index">
+                  <div class="img"><img :src="item.user.avatarUrl" alt=""></div>
+                  <div class="content_wrapper">
+                    <div class="content">
+                      <div class="comment_span_wrapper">
+                        <span style="color: #00f">{{item.user.nickname}}:</span>{{item.content}}
+                      </div>
+                    </div>
+                    <div class="comment_date_and_like_btn">
+                      <div class="comment_date">{{item.timeStr}}</div>
+                      <div class="right_do">
+                        <div class="comment_like" title="点赞" @click="handleClickLike(1, index)">
+                          <img :src="getLikeImgSrc(1, index)" alt="">
+                          {{item.likedCount}}
+                        </div>
+                        <div class="comment_share" title="分享"></div>
+                        <div class="comment_reply" title="回复评论"></div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+              <div class="show_more_wrapper">
+                <div class="show_more_button" @click="getMoreComment">更多精彩评论 > </div>
               </div>
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
         <div class="baseInfo">
           <div class="title">{{musicDetail.musicDetail[0].name}}</div>
@@ -176,6 +223,9 @@ import {parse} from "@vue/compiler-sfc";
         handleLyric()
         await getCommentList()
         audio.value.play()
+        await newComment.getNewComment(1)
+
+        newComment.currentPageNum = 1
       })
 
       /**
@@ -285,7 +335,7 @@ import {parse} from "@vue/compiler-sfc";
       }
 
       //存储歌曲评论
-      let commentList = reactive({commentList:[]})
+      let commentList = reactive({commentList:[{user: {}, liked: false, likedCount:0}]})
 
           /**
            * 获取歌曲评论
@@ -296,10 +346,11 @@ import {parse} from "@vue/compiler-sfc";
           method: `get`,
           params: {
             id: store.state.musicId,
-            limit: 5
+            limit: 5,
+            cookie: store.state.cookie
           }
         })
-            console.log(res.data);
+            console.log(res.data, `歌曲评论信息`);
         commentList.commentList = res.data.hotComments
       }
 
@@ -790,11 +841,130 @@ import {parse} from "@vue/compiler-sfc";
         }
       })
 
+      /**
+       * @brief 新版评论
+       * @date 2022.03.09
+       * */
+      let newComment = reactive({
+        //存储新版数组的数组
+        newCommentArr: {newCommentArr:[{user:{}, liked: false, likedCount: 0}]},
+
+        //上次请求使用的cursor
+        cursor: 0,
+
+        //当前的页数
+        currentPageNum: 1,
+
+        /**
+         * 获取新版评论
+         * @param pageNum 页数
+         * */
+        async getNewComment(pageNum:number) {
+          let res = {data:{data:{comments:[], cursor: 0}}};
+          if(pageNum === 1) {
+            res = await axios({
+              url: `http://localhost:3000/comment/new`,
+              method: `get`,
+              params: {
+                type: 0,
+                pageSize: 10,
+                id: store.state.musicId,
+                sortType: 3,
+                pageNum,
+              }
+            })
+            this.newCommentArr.newCommentArr = res.data.data.comments
+            this.cursor = res.data.data.cursor
+          }else {
+              res = await axios({
+              url: `http://localhost:3000/comment/new`,
+              method: `get`,
+              params: {
+                type: 0,
+                pageSize: 10,
+                id: store.state.musicId,
+                sortType: 3,
+                pageNo: pageNum,
+                cursor: this.cursor
+              }
+            })
+            this.newCommentArr.newCommentArr.push(...res.data.data.comments)
+            this.cursor = res.data.data.cursor
+          }
+          console.log(`新版评论`,res.data.data)
+        },
+
+        /**
+         * 点击获取更多评论按钮的处理函数
+         * */
+        async getMoreComment() {
+          this.currentPageNum += 1
+          await this.getNewComment(this.currentPageNum)
+        },
+
+        /**
+         * 根据是否点赞显示点赞图标的颜色
+         * @param type 0表示热门评论 1表示新版评论
+         * @param index
+         * */
+        // getLickImgSrc: computed((type:number, index:number) => {
+        //   if(type === 1) {
+        //         //热门评论
+        //         if(newComment.newCommentArr.newCommentArr[index]) return require(`../assets/Player/like_black.png`)
+        //         else return require(`../assets/Player/like_red.png`)
+        //       }else if(type === 0) {
+        //         if(commentList.commentList[index]) return require(`../assets/Player/like_black.png`)
+        //         else return require(`../assets/Player/like_red.png`)
+        //       }
+        // }),
+        getLikeImgSrc(type:number, index:number) {
+          if(type === 1) {
+            //热门评论
+            if(this.newCommentArr.newCommentArr[index]) return require(`../assets/Player/like_black.png`)
+            else return require(`../assets/Player/like_red.png`)
+          }else if(type === 0) {
+            if(commentList.commentList[index]) return require(`../assets/Player/like_black.png`)
+            else return require(`../assets/Player/like_red.png`)
+          }
+        },
+
+        /**
+         * 点赞处理函数
+         * @param type 0表示热门评论 1表示新版评论
+         * @param index
+         * */
+        handleClickLike(type:number, index:number) {
+          if(type === 0) {
+            //热门评论
+            if(commentList.commentList[index].liked) {
+              //取消点赞
+              commentList.commentList[index].likedCount -= 1
+            }else{
+              //点赞
+              commentList.commentList[index].likedCount += 1
+            }
+            commentList.commentList[index].liked = !commentList.commentList[index].liked
+          }else if(type === 1) {
+            //最新评论
+            if(this.newCommentArr.newCommentArr[index].liked) {
+              //取消点赞
+              this.newCommentArr.newCommentArr[index].likedCount -= 1
+            }else{
+              //点赞
+              this.newCommentArr.newCommentArr[index].likedCount += 1
+            }
+            this.newCommentArr.newCommentArr[index].liked = !this.newCommentArr.newCommentArr[index].liked
+          }
+        }
+      })
+
       onBeforeMount(async () => {
         await getDetailMusic()
         await getLyric()
         handleLyric()
         await getCommentList()
+
+        await newComment.getNewComment(1)
       })
 
       return {
@@ -853,6 +1023,8 @@ import {parse} from "@vue/compiler-sfc";
         playlistDetailOutWrapper,
 
         ...toRefs(dragLyric),
+        ...toRefs(newComment),
+        newComment,
       }
     }
   })
@@ -1271,9 +1443,15 @@ import {parse} from "@vue/compiler-sfc";
       overflow-x: hidden;
       overflow-y: scroll;
       padding: 50px;
+      display: flex;
+      justify-content: center;
       &::-webkit-scrollbar {
         display: none; /* Chrome Safari */
       }
+    }
+
+    .comment_add_wrapper {
+      width: 1000px;
     }
 
     .comment_wrapper {
@@ -1302,9 +1480,13 @@ import {parse} from "@vue/compiler-sfc";
       .comment_item{
         display: flex;
         width: 100%;
-        height: 70px;
+        //height: 70px;
         padding-top: 10px;
         padding-right: 5px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 5px;
 
         .img{
           width: 50px;
@@ -1317,12 +1499,182 @@ import {parse} from "@vue/compiler-sfc";
           }
         }
 
+        .content_wrapper {
+          width: 100%;
+        }
+
         .content {
-          padding-left: 10px;
+          padding-left: 20px;
+          //height: 150px;
+          min-height: 53px;
+        }
+
+        .comment_date_and_like_btn {
+          padding-left: 20px;
+          padding-right: 20px;
+          display: flex;
+          justify-content: space-between;
+          height: 20px;
+
+          .right_do {
+            display: flex;
+            flex-direction: row;
+            user-select: none;
+
+            .comment_like {
+              width: 60px;
+              height: 20px;
+              line-height: 20px;
+              cursor: pointer;
+
+              img {
+                width: 16px;
+                height: 16px;
+              }
+            }
+
+            .comment_share {
+              width: 20px;
+              height: 20px;
+              background: url("../assets/Player/share.png") no-repeat center center;
+              background-size: 16px 16px;
+              cursor: pointer;
+            }
+
+            .comment_reply {
+              width: 20px;
+              height: 20px;
+              background: url("../assets/Player/reply.png") no-repeat center center;
+              background-size: 16px 16px;
+              margin-left: 20px;
+              cursor: pointer;
+            }
+          }
         }
       }
     }
   }
+
+    .new_comment {margin-top: 30px;
+      width: 100%;
+
+      .new_comment_title {
+        font-size: 20px;
+        color: #000;
+        font-family: "楷体", serif;
+        font-weight: bolder;
+        border-radius: 20px;
+        border:1px solid #000;
+        background-color: #ccc;
+        text-align: center;
+      }
+
+      .new_comment_wrapper {
+        width: 100%;
+
+        .comment_item{
+          display: flex;
+          width: 100%;
+          //height: 70px;
+          padding-top: 10px;
+          padding-right: 5px;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          border-bottom: 1px solid #ccc;
+          padding-bottom: 5px;
+
+          .img{
+            width: 50px;
+            height: 100%;
+
+            img {
+              width: 50px;
+              height: 50px;
+              border-radius: 50%;
+            }
+          }
+
+          .content_wrapper {
+            width: 100%;
+          }
+
+          .content {
+            padding-left: 20px;
+            //height: 150px;
+            min-height: 53px;
+          }
+
+          .comment_date_and_like_btn {
+            padding-left: 20px;
+            padding-right: 20px;
+            display: flex;
+            justify-content: space-between;
+            height: 20px;
+
+            .right_do {
+              display: flex;
+              flex-direction: row;
+              user-select: none;
+
+              .comment_like {
+                width: 60px;
+                height: 20px;
+                line-height: 20px;
+                cursor: pointer;
+
+                img {
+                  width: 16px;
+                  height: 16px;
+                }
+              }
+
+              .comment_share {
+                width: 20px;
+                height: 20px;
+                background: url("../assets/Player/share.png") no-repeat center center;
+                background-size: 16px 16px;
+                cursor: pointer;
+              }
+
+              .comment_reply {
+                width: 20px;
+                height: 20px;
+                background: url("../assets/Player/reply.png") no-repeat center center;
+                background-size: 16px 16px;
+                margin-left: 20px;
+                cursor: pointer;
+              }
+            }
+          }
+        }
+
+      }
+
+      .show_more_wrapper {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        align-items: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        height: 60px;
+      }
+
+      .show_more_button {
+        width: 200px;
+        text-align: center;
+        border: 1px solid #ccc;
+        font-weight: bolder;
+        font-family: "楷体", serif;
+        background-color: #fff;
+        height: 30px;
+        font-size: 20px;
+        line-height: 30px;
+        border-radius: 20px;
+        user-select: none;
+        cursor: pointer;
+      }
+    }
 
   .playlist_detail_out_wrapper {
     position: absolute;
