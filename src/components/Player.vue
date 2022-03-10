@@ -81,6 +81,7 @@
           </div>
         </div>
         <div class="out_comment_wrapper">
+          <div class="comment_write" @click="isShowWrittenCommentMask = true; writtenCommentType = 1">写评论</div>
           <!--                  评论容器-->
           <div class="comment_add_wrapper">
             <ul class="comment_wrapper">
@@ -96,12 +97,15 @@
                   <div class="comment_date_and_like_btn">
                     <div class="comment_date">{{item.timeStr}}</div>
                     <div class="right_do">
-                      <div class="comment_like" title="点赞" @click="handleClickLike(0, index)">
-                        <img :src="getLikeImgSrc(0, index)" alt="">
+                      <div class="comment_like" title="点赞"
+                           :class="{active: item.liked }"
+                           @click="handleClickLike(0, index)">
+<!--                        <img :src="getLikeImgSrc(0, index)" alt="">-->
                         {{item.likedCount}}
                       </div>
                       <div class="comment_share" title="分享"></div>
-                      <div class="comment_reply" title="回复评论"></div>
+                      <div class="comment_reply" title="回复评论"
+                           @click="isShowWrittenCommentMask = true; replyCommentId = item.commentId; writtenCommentType = 2"></div>
                     </div>
                   </div>
                 </div>
@@ -122,12 +126,15 @@
                     <div class="comment_date_and_like_btn">
                       <div class="comment_date">{{item.timeStr}}</div>
                       <div class="right_do">
-                        <div class="comment_like" title="点赞" @click="handleClickLike(1, index)">
-                          <img :src="getLikeImgSrc(1, index)" alt="">
+                        <div class="comment_like" title="点赞"
+                             :class="{active: item.liked }"
+                             @click="handleClickLike(1, index)">
+<!--                          <img :src="getLikeImgSrc(1, index)" alt="">-->
                           {{item.likedCount}}
                         </div>
                         <div class="comment_share" title="分享"></div>
-                        <div class="comment_reply" title="回复评论"></div>
+                        <div class="comment_reply" title="回复评论"
+                             @click="isShowWrittenCommentMask = true; replyCommentId = item.commentId ;writtenCommentType = 2"></div>
                       </div>
                     </div>
                   </div>
@@ -186,6 +193,17 @@
             <div class="delete_song" @click.stop="deleteSongInPlaylist(index)"></div>
           </li>
         </ul>
+      </div>
+    </teleport>
+
+<!--    写评论遮罩层-->
+    <teleport to="body">
+      <div class="comment_written_mask" v-if="isShowWrittenCommentMask">
+        <div class="comment_wrapper">
+          <div class="close_comment" @click="isShowWrittenCommentMask = false">X</div>
+          <textarea name="" id="" cols="30" rows="10" v-model="commentWritten"></textarea>
+          <div class="comment_submit" @click="sendComment()">评论</div>
+        </div>
       </div>
     </teleport>
   </div>
@@ -335,7 +353,7 @@ import {parse} from "@vue/compiler-sfc";
       }
 
       //存储歌曲评论
-      let commentList = reactive({commentList:[{user: {}, liked: false, likedCount:0}]})
+      let commentList = reactive({commentList:[{user: {}, liked: false, likedCount:0, commentId: 0}]})
 
           /**
            * 获取歌曲评论
@@ -347,7 +365,8 @@ import {parse} from "@vue/compiler-sfc";
           params: {
             id: store.state.musicId,
             limit: 5,
-            cookie: store.state.cookie
+            cookie: store.state.cookie,
+            time: new Date()
           }
         })
             console.log(res.data, `歌曲评论信息`);
@@ -847,7 +866,7 @@ import {parse} from "@vue/compiler-sfc";
        * */
       let newComment = reactive({
         //存储新版数组的数组
-        newCommentArr: {newCommentArr:[{user:{}, liked: false, likedCount: 0}]},
+        newCommentArr: {newCommentArr:[{user:{}, liked: false, likedCount: 0, commentId: 0}]},
 
         //上次请求使用的cursor
         cursor: 0,
@@ -871,6 +890,7 @@ import {parse} from "@vue/compiler-sfc";
                 id: store.state.musicId,
                 sortType: 3,
                 pageNum,
+                time: new Date()
               }
             })
             this.newCommentArr.newCommentArr = res.data.data.comments
@@ -885,7 +905,8 @@ import {parse} from "@vue/compiler-sfc";
                 id: store.state.musicId,
                 sortType: 3,
                 pageNo: pageNum,
-                cursor: this.cursor
+                cursor: this.cursor,
+                time: new Date()
               }
             })
             this.newCommentArr.newCommentArr.push(...res.data.data.comments)
@@ -907,16 +928,6 @@ import {parse} from "@vue/compiler-sfc";
          * @param type 0表示热门评论 1表示新版评论
          * @param index
          * */
-        // getLickImgSrc: computed((type:number, index:number) => {
-        //   if(type === 1) {
-        //         //热门评论
-        //         if(newComment.newCommentArr.newCommentArr[index]) return require(`../assets/Player/like_black.png`)
-        //         else return require(`../assets/Player/like_red.png`)
-        //       }else if(type === 0) {
-        //         if(commentList.commentList[index]) return require(`../assets/Player/like_black.png`)
-        //         else return require(`../assets/Player/like_red.png`)
-        //       }
-        // }),
         getLikeImgSrc(type:number, index:number) {
           if(type === 1) {
             //热门评论
@@ -933,15 +944,17 @@ import {parse} from "@vue/compiler-sfc";
          * @param type 0表示热门评论 1表示新版评论
          * @param index
          * */
-        handleClickLike(type:number, index:number) {
+        async handleClickLike(type:number, index:number) {
           if(type === 0) {
             //热门评论
             if(commentList.commentList[index].liked) {
               //取消点赞
               commentList.commentList[index].likedCount -= 1
+              await this.likeComment(0, index, 0)
             }else{
               //点赞
               commentList.commentList[index].likedCount += 1
+              await this.likeComment(0, index, 1)
             }
             commentList.commentList[index].liked = !commentList.commentList[index].liked
           }else if(type === 1) {
@@ -949,12 +962,72 @@ import {parse} from "@vue/compiler-sfc";
             if(this.newCommentArr.newCommentArr[index].liked) {
               //取消点赞
               this.newCommentArr.newCommentArr[index].likedCount -= 1
+              await this.likeComment(1, index, 0)
             }else{
               //点赞
               this.newCommentArr.newCommentArr[index].likedCount += 1
+              await this.likeComment(1, index, 1)
             }
             this.newCommentArr.newCommentArr[index].liked = !this.newCommentArr.newCommentArr[index].liked
           }
+        },
+
+        /**
+         * 给评论点赞
+         * @param type 评论的类型
+         * @param index 评论的索引值
+         * @param t 点赞或取消点赞
+         * */
+        async likeComment(type:number, index:number, t:number) {
+          let commentArr = [commentList.commentList, this.newCommentArr.newCommentArr]
+          console.log(commentArr[type][index].commentId, `点赞评论id`)
+          let res = await axios({
+              url: `http://localhost:3000/comment/like`,
+              method: `get`,
+              params: {
+                id: store.state.logInfo.profile.userId,
+                cid: commentArr[type][index].commentId,
+                t,
+                type: 0,
+                cookie: store.state.cookie,
+                time: new Date()
+              }
+            })
+          console.log(res.data);
+        },
+
+        /**
+         * 写评论和回复评论
+         * */
+        //是否显示写评论遮罩层
+        isShowWrittenCommentMask: false,
+        //和v-modle绑定的 用户写的评论
+        commentWritten: ``,
+
+        //回复评论的id
+        replyCommentId: null,
+
+        //写评论的类型
+        writtenCommentType: 1,
+
+        /**
+         * 发表评论
+         * @param t 1表示发送评论 2 表示回复评论
+         * */
+        async sendComment() {
+          this.isShowWrittenCommentMask = false
+          await axios({
+            url: `http://localhost:3000/comment`,
+            method: `get`,
+            params: {
+              t: this.writtenCommentType,
+              type: 0,
+              id: store.state.musicId,
+              content: this.commentWritten,
+              commentId: this.replyCommentId,
+              cookie: store.state.cookie
+            }
+          })
         }
       })
 
@@ -1448,6 +1521,27 @@ import {parse} from "@vue/compiler-sfc";
       &::-webkit-scrollbar {
         display: none; /* Chrome Safari */
       }
+
+      .comment_write {
+        width: 150px;
+        font-size: 20px;
+        line-height: 30px;
+        text-align: center;
+        padding-left: 30px;
+        font-family: "楷体", serif;
+        font-weight: bold;
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        background: #ccc;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        background: url("../assets/Player/write_comment.png") no-repeat 10px center;
+        background-size: 16px 16px;
+        background-color: #fff;
+        user-select: none;
+        cursor: pointer;
+      }
     }
 
     .comment_add_wrapper {
@@ -1526,6 +1620,14 @@ import {parse} from "@vue/compiler-sfc";
               height: 20px;
               line-height: 20px;
               cursor: pointer;
+              background: url("../assets/Player/like_black.png") no-repeat 2px center;
+              background-size: 16px 16px;
+              padding-left: 20px;
+
+              &.active {
+                background: url("../assets/Player/like_red.png") no-repeat 2px center;
+                background-size: 16px 16px;
+              }
 
               img {
                 width: 16px;
@@ -1621,10 +1723,13 @@ import {parse} from "@vue/compiler-sfc";
                 height: 20px;
                 line-height: 20px;
                 cursor: pointer;
+                padding-left: 20px;
+                background: url("../assets/Player/like_black.png") no-repeat 2px center;
+                background-size: 16px 16px;
 
-                img {
-                  width: 16px;
-                  height: 16px;
+                &.active {
+                  background: url("../assets/Player/like_red.png") no-repeat 2px center;
+                  background-size: 16px 16px;
                 }
               }
 
@@ -1797,6 +1902,67 @@ import {parse} from "@vue/compiler-sfc";
           opacity: 0;
           transition: .5s;
         }
+      }
+    }
+  }
+
+  .comment_written_mask {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+
+    .comment_wrapper {
+      background-color: #fff;
+      width: 400px;
+      height: 330px;
+      padding: 40px 20px 20px;
+      position: relative;
+      border-radius: 20px;
+
+      .close_comment {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        user-select: none;
+        font-size: 20px;
+        font-weight: bolder;
+        color: #000;
+        //margin-bottom: 20px;
+        cursor: pointer;
+      }
+
+      textarea {
+        width: 360px;
+        height: 200px;
+        font-weight: bolder;
+        font-size: 18px;
+        padding: 10px;
+        font-family: "楷体", serif;
+      }
+
+      .comment_submit {
+        position: absolute;
+        right: 30px;
+        bottom: 30px;
+        width: 100px;
+        height: 30px;
+        background-color: #C20C0C;
+        border-radius: 20px;
+        font-size: 20px;
+        line-height: 30px;
+        text-align: center;
+        color: #fff;
+        font-weight: bolder;
+        font-family: "楷体", serif;
+        user-select: none;
+        cursor: pointer;
       }
     }
   }
