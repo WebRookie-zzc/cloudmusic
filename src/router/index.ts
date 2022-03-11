@@ -3,7 +3,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path: ``,
-    redirect: `/home`
+    redirect: `/search`
   },
   {
     path:"/home",
@@ -38,6 +38,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: `/audio`,
     component: () => import(`../views/content/Audio.vue`)
+  },
+  {
+    path: `/search`,
+    component: () => import(`@/views/content/SongMv.vue`)
   }
 ]
 

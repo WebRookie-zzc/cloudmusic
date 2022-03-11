@@ -42,6 +42,7 @@
       <div class="song_order" title="顺序播放" v-if="playlistState === 1" @click="changePlaylistState"></div>
 <!--      单曲循环-->
       <div class="song_only" title="单曲循环" v-if="playlistState === 2" @click="changePlaylistState"></div>
+      <div class="song_mv" @click="handleClickMvBtn"></div>
       <div class="SQ" title="无损音质"></div>
 <!--      音量-->
       <div class="volume"
@@ -214,6 +215,7 @@ import {computed, defineComponent, onBeforeMount, reactive, ref, toRefs, watch} 
 import axios from "axios";
 import {useStore} from "vuex";
 import {parse} from "@vue/compiler-sfc";
+import {useRoute, useRouter} from "vue-router";
 
   export default defineComponent({
     name: `Player`,
@@ -221,6 +223,10 @@ import {parse} from "@vue/compiler-sfc";
       let store = useStore()
 
       let musicId = computed(() => store.state.musicId)
+
+      let router = useRouter()
+
+      let route = useRoute()
 
       // 神女劈观的歌曲 id 1910911958
       // let musicId = ref<number>(1910911958)
@@ -1028,6 +1034,13 @@ import {parse} from "@vue/compiler-sfc";
               cookie: store.state.cookie
             }
           })
+        },
+        /**
+         * 处理MV按钮的点击事件
+         * */
+      handleClickMvBtn() {
+        isShowLyric.value = false
+          router.push('/search')
         }
       })
 
@@ -1338,6 +1351,14 @@ import {parse} from "@vue/compiler-sfc";
       height: 40px;
       background: url("../assets/Player/only.png") no-repeat center center;
       background-size: 25px 25px;
+      cursor: pointer;
+    }
+
+    .song_mv {
+      width: 40px;
+      height: 40px;
+      background: url("../assets/Player/mv.png") no-repeat center center;
+      background-size: 35px 35px;
       cursor: pointer;
     }
 
