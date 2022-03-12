@@ -3,7 +3,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path: ``,
-    redirect: `/home`
+    redirect: `/search`
   },
   {
     path:"/home",
@@ -11,15 +11,7 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: ``,
-<<<<<<< HEAD
-<<<<<<< HEAD
         redirect: `/home/recommend`,
-=======
-        redirect: `/home/exclusive`,
->>>>>>> 3fac76e (2022.2.12)
-=======
-        redirect: `/home/recommend`,
->>>>>>> 9f1452e (2022.2.14)
       },
       {
         path: `recommend`,
@@ -28,15 +20,10 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: `exclusive`,
         component: () => import(`../views/content/Home/Exclusive.vue`)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9f1452e (2022.2.14)
       },
       {
         path: `singers`,
         component: () => import(`../views/content/Home/Artist.vue`)
-<<<<<<< HEAD
       },
     ]
   },
@@ -51,12 +38,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: `/audio`,
     component: () => import(`../views/content/Audio.vue`)
-=======
-=======
->>>>>>> 9f1452e (2022.2.14)
-      }
-    ]
->>>>>>> 3fac76e (2022.2.12)
+  },
+  {
+    path: `/search`,
+    component: () => import(`@/views/content/SongMv.vue`)
   }
 ]
 

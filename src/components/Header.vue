@@ -8,11 +8,7 @@
         <input type="text" placeholder="搜索"
                v-model="searchValue"
                @focus="getDefaultList"
-<<<<<<< HEAD
                @blur="handleBlur">
-=======
-               @blur="isShowSearchList = false; isShowDetail = false">
->>>>>>> 3fac76e (2022.2.12)
 <!--        搜索下拉框-->
 <!--        搜索结果列表-->
         <ul class="search_list" v-if="isShowDetail && isShowSearchList">
@@ -31,11 +27,7 @@
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length === 0">无结果</li>
           <li class="recommend_item" v-if="Object.keys(recommendSearchObj).length !== 0 &&  recommendSearchObj.order.includes(`songs`)">
             <div class="recommend_title">单曲</div>
-<<<<<<< HEAD
-            <div class="recommend_detail" v-for="item in recommendSearchObj.songs" @click="changeMusicId(item.id)">
-=======
-            <div class="recommend_detail" v-for="item in recommendSearchObj.songs">
->>>>>>> 3fac76e (2022.2.12)
+            <div class="recommend_detail" v-for="(item, index) in recommendSearchObj.songs" @click="changeMusicId(item.id, index)">
               {{item.name}} - <span v-for="artist in item.artists"> {{artist.name}}  &nbsp;</span>
             </div>
           </li>
@@ -176,7 +168,7 @@ export default defineComponent({
     //存储定时器用于消抖
     let recommendTimer:any;
     //存储推荐内容
-    let recommendSearchObj = ref({})
+    let recommendSearchObj = ref({songs:[{ar:``, artists: ``, dt:``,duration: ``}]})
 
     /**
      * 调用接口获取搜索建议
@@ -207,7 +199,6 @@ export default defineComponent({
     })
 
     /**
-<<<<<<< HEAD
      * 处理失去焦点事件
      * */
     function handleBlur() {
@@ -216,16 +207,19 @@ export default defineComponent({
     }
 
     /**
-     * 提交mutation 改变音乐Id
+     * 提交mutation 改变音乐Id， 并添加到播放的列表中(不是添加到歌单中)
      * @param newMusicId
+     * @param index 搜索结果中的单曲的索引值
      * */
-    function changeMusicId(newMusicId:number) {
+    function changeMusicId(newMusicId:number ,index:number) {
       store.commit(`changeMusicId`, newMusicId)
+      //添加到播放列表中
+      recommendSearchObj.value.songs[index].ar = recommendSearchObj.value.songs[index].artists
+      recommendSearchObj.value.songs[index].dt = recommendSearchObj.value.songs[index].duration
+      store.commit(`addElementToPlayingPlaylist`, recommendSearchObj.value.songs[index])
     }
 
     /**
-=======
->>>>>>> 3fac76e (2022.2.12)
      * @date 2022.2.4
      * @brief 登录功能
      * @finished 2022.2.6
@@ -318,6 +312,9 @@ export default defineComponent({
             store.commit(`changeCookie`, res.data.cookie)
             store.commit(`addUserInfo`, res.data.profile)
             isShowMask.value = false
+
+            //登录成功后立即获取用户歌单列表
+            await store.dispatch(`getUserPlayList`)
           }
         }
       }else{
@@ -454,11 +451,8 @@ export default defineComponent({
       isShowSearchList,
       recommendSearchObj,
       getRecommendSearchList,
-<<<<<<< HEAD
       handleBlur,
       changeMusicId,
-=======
->>>>>>> 3fac76e (2022.2.12)
 
       //手机号登录
       isShowMask,
@@ -719,14 +713,7 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,.3);
-<<<<<<< HEAD
-<<<<<<< HEAD
   z-index: 99;
-=======
->>>>>>> 3fac76e (2022.2.12)
-=======
-  z-index: 99;
->>>>>>> 9f1452e (2022.2.14)
 
   .log_box {
     width: 340px;
@@ -944,7 +931,7 @@ export default defineComponent({
         border-radius: 20px;
         text-align: center;
         font-weight: bolder;
-        font-family: "楷体";
+        font-family: "楷体", Serif;
 
         &:hover {
           cursor: pointer;
