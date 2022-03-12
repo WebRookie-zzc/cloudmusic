@@ -1034,6 +1034,7 @@ import {useRoute, useRouter} from "vue-router";
               cookie: store.state.cookie
             }
           })
+          this.replyCommentId = null
         },
         /**
          * 处理MV按钮的点击事件
