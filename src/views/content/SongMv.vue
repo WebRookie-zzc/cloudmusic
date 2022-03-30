@@ -15,8 +15,8 @@
       <div class="back_wrapper">
         <div class="back_button" title="返回" @click.stop="isShowMvList = true">&lt;</div>
       </div>
-<!--      <video controls :src="mvUrl"></video>-->
-      <video controls src="../../assets/Content/SongMV/world.execute(me).mp4"></video>
+      <video controls :src="mvUrl"></video>
+<!--      <video controls src="../../assets/Content/SongMV/world.execute(me).mp4"></video>-->
 
 <!--      作者信息-->
       <div class="mv_info">

@@ -1165,7 +1165,13 @@ import {useRoute, useRouter} from "vue-router";
           font-weight: bolder;
         }
 
+        .left_name {
+          //height: 20px;
+          white-space: nowrap;
+        }
+
         .singer_name {
+          //width: 300px;
           display: flex;
           font-weight: normal;
           font-size: 14px;
